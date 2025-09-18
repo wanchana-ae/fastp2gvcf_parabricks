@@ -8,7 +8,8 @@ Pipeline to Call SNP/Indels (GVCF file) by Parabricks
 
 ## Sample data
 ```bash
-wget -O parabricks_sample.tar.gz "https://s3.amazonaws.com/parabricks.sample/parabricks_sample.tar.gz"
+wget -O parabricks_sample.tar.gz "https://s3.amazonaws.com/parabricks.sample/parabricks_sample.tar.gz" 
+```
 
 ## Metadata format for multi-samples
 The metadata file for multiple samples should have the following format:
