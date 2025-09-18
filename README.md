@@ -1,4 +1,8 @@
 # fastp2gvcf_parabricks
+## System Requirements
+NVIDIA GeForce RTX 5070 Ti
+AMD Ryzen 9 7950X 16-Core Processor
+Memory (RAM) 32 GB
 
 ## Description
 Pipeline to Call SNP/Indels (GVCF file) by Parabricks
@@ -79,10 +83,13 @@ while IFS=, read -r seq_id sample_id raw1 raw2; do
 
     # Step 2: Mapping
     #Maps the trimmed reads to the reference genome using Parabricks/BWA. Output BAM files are saved in $OUT_MAPPED.
+    #The fq2bam tool requires at least 38 GB of GPU memory by default; 
+    #the --low-memory option will reduce this to 16 GB of GPU memory at the cost of slower processing.
     run_fq2bam "$sample_id" "$in1" "$in2"
     
     # Step 3: Run HaplotypeCaller
     #Calls variants using HaplotypeCaller and generates GVCF files in $OUT_GVCF.
+    #--htvc-low-memory option will reduce this to 16 GB of GPU memory
     run_haplotypecaller "$sample_id"
 
     echo "[DONE] Pipeline completed for $sample_id"
