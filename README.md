@@ -43,19 +43,19 @@ ml load bwa
 ### Working Directories
 Set your working directory and output paths in run_parabricks.sh:
 ```bash
-#set working dir
+# Set working dir
 workdir="$HOME/Downloads/parabricks_sample/"
 
 # Base directory paths
 # Output dir fastp output file
 OUT_TRIMMED="${workdir}Call_SNP/Trimed/"
-#Output dir Mapping output file
+# Output dir Mapping output file
 OUT_MAPPED="${workdir}Call_SNP/Mapped/"
-#Output dir GVCF output file
+# Output dir GVCF output file
 OUT_GVCF="${workdir}Call_SNP/GVCF/"
-#Output dir log output file
+# Output dir log output file
 OUT_LOG="${workdir}Call_SNP/log/"
-#Path to reference genome
+# Path to reference genome
 REF="${workdir}Ref/Homo_sapiens_assembly38.fasta"
 ```
 ### Sample Metadata File
@@ -64,8 +64,8 @@ The pipeline requires a metadata file to define your samples. Edit the following
 # Sample metadata file
 # Columns: seq_id,sample_id,forward_read_path,reverse_read_path
 # Example usage:
-#SEQ001,Sample_A,/data/raw/SEQ001_R1.fastq.gz,/data/raw/SEQ001_R2.fastq.gz
-#SEQ002,Sample_B,/data/raw/SEQ002_R1.fastq.gz,/data/raw/SEQ002_R2.fastq.gz
+# SEQ001,Sample_A,/data/raw/SEQ001_R1.fastq.gz,/data/raw/SEQ001_R2.fastq.gz
+# SEQ002,Sample_B,/data/raw/SEQ002_R1.fastq.gz,/data/raw/SEQ002_R2.fastq.gz
 INFO_FILE="metadata_fix.txt"
 ```
 ### Main Loop Overview
@@ -74,7 +74,7 @@ The main loop in `run_parabricks.sh` processes each sample in the metadata file 
 ```bash
 while IFS=, read -r seq_id sample_id raw1 raw2; do
     # Step 0: check ref index
-    #Ensures the reference genome is indexed for BWA. Creates the index if missing.
+    # Ensures the reference genome is indexed for BWA. Creates the index if missing.
     check_bwa_index "$REF"
 
     # Step 1: QC + trimming
@@ -82,14 +82,14 @@ while IFS=, read -r seq_id sample_id raw1 raw2; do
     run_fastp "$sample_id" "$raw1" "$raw2"
 
     # Step 2: Mapping
-    #Maps the trimmed reads to the reference genome using Parabricks/BWA. Output BAM files are saved in $OUT_MAPPED.
-    #The fq2bam tool requires at least 38 GB of GPU memory by default; 
-    #the --low-memory option will reduce this to 16 GB of GPU memory at the cost of slower processing.
+    # Maps the trimmed reads to the reference genome using Parabricks/BWA. Output BAM files are saved in $OUT_MAPPED.
+    # The fq2bam tool requires at least 38 GB of GPU memory by default; 
+    # --low-memory option will reduce this to 16 GB of GPU memory at the cost of slower processing.
     run_fq2bam "$sample_id" "$in1" "$in2"
     
     # Step 3: Run HaplotypeCaller
-    #Calls variants using HaplotypeCaller and generates GVCF files in $OUT_GVCF.
-    #--htvc-low-memory option will reduce this to 16 GB of GPU memory
+    # Calls variants using HaplotypeCaller and generates GVCF files in $OUT_GVCF.
+    # --htvc-low-memory option will reduce this to 16 GB of GPU memory
     run_haplotypecaller "$sample_id"
 
     echo "[DONE] Pipeline completed for $sample_id"
