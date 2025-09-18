@@ -1,8 +1,8 @@
 # fastp2gvcf_parabricks
 ## System Requirements
-NVIDIA GeForce RTX 5070 Ti
-AMD Ryzen 9 7950X 16-Core Processor
-Memory (RAM) 32 GB
+- **GPU:** NVIDIA GeForce RTX 5070 Ti  
+- **CPU:** AMD Ryzen 9 7950X 16-Core Processor  
+- **Memory (RAM):** 32 GB
 
 ## Description
 Pipeline to Call SNP/Indels (GVCF file) by Parabricks
