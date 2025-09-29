@@ -97,7 +97,7 @@ run_fq2bam() {
         --ref "$REF" \
         --in-fq "$in1" "$in2" \
         --low-memory \
-        --out-bam "$bam_out" --tmp-dir /tmp 2>&1 | tee -a "$log_file"
+        --out-bam "$bam_out" 2>&1 | tee -a "$log_file"
 }
 
 run_haplotypecaller() {
