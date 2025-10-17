@@ -115,6 +115,7 @@ run_haplotypecaller() {
     pbrun haplotypecaller \
         --ref "$REF" \
         --gvcf \
+        --max-alternate-alleles 6 \
         --htvc-low-memory \
         --num-htvc-threads 16 \
         --in-bam "$bam_in" \
