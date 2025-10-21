@@ -96,6 +96,10 @@ run_fq2bam() {
     pbrun fq2bam \
         --ref "$REF" \
         --in-fq "$in1" "$in2" \
+        --read-group-sm ${sample_id} \
+        --read-group-lb ${sample_id} \
+        --read-group-pl ILLUMINA \
+        --read-group-id-prefix ${sample_id}
         --low-memory \
         --out-bam "$bam_out" 2>&1 | tee -a "$log_file"
 }
