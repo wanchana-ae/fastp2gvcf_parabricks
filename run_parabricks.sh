@@ -99,7 +99,7 @@ run_fq2bam() {
         --read-group-sm ${sample_id} \
         --read-group-lb ${sample_id} \
         --read-group-pl ILLUMINA \
-        --read-group-id-prefix ${sample_id}
+        --read-group-id-prefix ${sample_id} \
         --low-memory \
         --out-bam "$bam_out" 2>&1 | tee -a "$log_file"
 }
