@@ -8,22 +8,25 @@ ml load fastp
 ml load clara-parabricks
 ml load bwa
 
+# [FIX] to Container see /fs5
+export SINGULARITY_BINDPATH="/fs5"
+
 #set working dir
-workdir="$HOME/Downloads/parabricks_sample/"
+workdir="/fs5/Coconut/Germplasm_Cocohelix/"
 
 # Base directory paths
 OUT_TRIMMED="${workdir}Call_SNP/Trimed/"
 OUT_MAPPED="${workdir}Call_SNP/Mapped/"
 OUT_GVCF="${workdir}Call_SNP/GVCF/"
 OUT_LOG="${workdir}Call_SNP/log/"
-REF="${workdir}Ref/Homo_sapiens_assembly38.fasta"
+REF=/fs5/Coconut/Reference/Ref_Cnuc_CPCRI_V2/Cnuc_CPCRI_V2_chr.fasta
 
 # Sample metadata file
 # Columns: seq_id,sample_id,forward_read_path,reverse_read_path
 # Example usage:
 #SEQ001,Sample_A,/data/raw/SEQ001_R1.fastq.gz,/data/raw/SEQ001_R2.fastq.gz
 #SEQ002,Sample_B,/data/raw/SEQ002_R1.fastq.gz,/data/raw/SEQ002_R2.fastq.gz
-INFO_FILE="metadata_fix.txt"
+INFO_FILE=/fs5/Coconut/Germplasm_Cocohelix/Cocohelix_batch/metadata.txt
 
 # Create directories if they don't exist
 mkdir -p "${OUT_MAPPED}" "${OUT_GVCF}" "${OUT_TRIMMED}" "${OUT_LOG}"
@@ -75,14 +78,15 @@ run_fastp() {
         --detect_adapter_for_pe \
         --cut_tail --cut_window_size 4 --cut_mean_quality 20 \
         --length_required 16 \
-        -h "$html"\
-        -j "$json" 2>&1 | tee -a "$log_file"
+        --html "$html" --json "$json" 2>&1 | tee -a "$log_file"
+    md5sum ${out1} > "${OUT_TRIMMED}${sample_id}.md5"
+    md5sum ${out2} >> "${OUT_TRIMMED}${sample_id}.md5"
 }
 
 run_fq2bam() {
     local sample_id=$1
-    local in1=$2
-    local in2=$3
+    local in1="${OUT_TRIMMED}${sample_id}_forward_paired.fq.gz"
+    local in2="${OUT_TRIMMED}${sample_id}_reverse_paired.fq.gz"
     local bam_out="${OUT_MAPPED}${sample_id}.bam"
     local log_file="${OUT_LOG}${sample_id}.fq2bam.log"
 
@@ -102,6 +106,7 @@ run_fq2bam() {
         --read-group-id-prefix ${sample_id} \
         --low-memory \
         --out-bam "$bam_out" 2>&1 | tee -a "$log_file"
+    md5sum ${bam_out} > "${OUT_MAPPED}${sample_id}.md5"
 }
 
 run_haplotypecaller() {
@@ -124,6 +129,7 @@ run_haplotypecaller() {
         --num-htvc-threads 16 \
         --in-bam "$bam_in" \
         --out-variants "$vcf_out" 2>&1 | tee -a "$log_file"
+    md5sum ${vcf_out} > "${OUT_GVCF}${sample_id}.md5"
 }
 
 # ==========================
@@ -134,15 +140,29 @@ while IFS=, read -r seq_id sample_id raw1 raw2; do
     check_bwa_index "$REF"
 
     # Step 1: QC + trimming
-    run_fastp "$sample_id" "$raw1" "$raw2"
+    if [ -f ${OUT_TRIMMED}${sample_id}_forward_paired.fq.gz ] && [ -f ${OUT_TRIMMED}${sample_id}_reverse_paired.fq.gz ]; then
+    	if md5sum --status -c ${OUT_TRIMMED}${sample_id}.md5; then
+    		echo "[${sample_id}] Already QC/trimmed and MD5 OK"
+    	else
+    		run_fastp "$sample_id" "$raw1" "$raw2"
+    	fi
+    else
+    	run_fastp "$sample_id" "$raw1" "$raw2"
+    fi
 
     # Step 2: Mapping
-    #in1="${OUT_TRIMMED}${sample_id}_forward_paired.fq.gz"
-    #in2="${OUT_TRIMMED}${sample_id}_reverse_paired.fq.gz"
-    run_fq2bam "$sample_id" "$in1" "$in2"
+    if [ -f ${OUT_MAPPED}${sample_id}.bam ] && md5sum --status -c ${OUT_MAPPED}${sample_id}.md5; then
+    	echo "[${sample_id}] Already Mapped and MD5 OK"
+    else
+    	run_fq2bam "$sample_id"
+    fi
     
-    #Step 3 : run haplotypecalle
-    run_haplotypecaller "$sample_id"
+    #Step 3 : run haplotypecaller
+    if [ -f ${OUT_MAPPED}${sample_id}.bam ] && md5sum --status -c ${OUT_GVCF}${sample_id}.md5; then
+    	echo "[${sample_id}] Already Run haplotypecaller and MD5 OK"
+    else
+    	run_haplotypecaller "$sample_id"
+    fi
 
     echo "[DONE] Pipeline completed for $sample_id"
 done < "$INFO_FILE"
